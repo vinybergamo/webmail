@@ -15,7 +15,7 @@ class UserController {
 
   private initializeRoutes(): void {
     this.router.post("/register", this.userService.register);
-    this.router.post("/login");
+    this.router.post("/login", this.userService.login);
   }
 
   private listRoutes(): void {
@@ -23,13 +23,14 @@ class UserController {
       .filter((r) => r.route)
       .map((r) => {
         return {
-          path: Object.keys(r.route.methods),
+          path: Object.keys(r.route.methods)[0].toUpperCase(),
+          name: r.route.stack[0].name,
           route: r.route.path,
         };
       });
 
     logger.magenta("User Routes:");
-    routes.map((r) => logger.cyan(`${r.route}`));
+    routes.map((r) => logger.cyan(`${r.name} ${r.path} ${r.route}`));
   }
 }
 

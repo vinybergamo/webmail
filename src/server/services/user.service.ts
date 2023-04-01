@@ -1,10 +1,14 @@
 import { Request, Response } from "express";
-import { hashSync, genSaltSync } from "bcrypt";
+import { hashSync, genSaltSync, compareSync } from "bcrypt";
+import { sign } from "jsonwebtoken";
 import prisma from "../../utils/prismaClient";
-import { decrypt, encrypt } from "../../utils/encryption";
+import { encrypt } from "../../utils/encryption";
+import { ParamsDictionary } from "express-serve-static-core";
+import { ParsedQs } from "qs";
 
 export interface IUserService {
   register: (req: Request, res: Response) => Promise<Response>;
+  login: (req: Request, res: Response) => Promise<Response>;
 }
 
 class UserService implements IUserService {
@@ -42,6 +46,37 @@ class UserService implements IUserService {
         ...user,
         password: undefined,
       },
+    });
+  }
+
+  public async login(req: Request, res: Response): Promise<Response> {
+    const { email, password } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user)
+      return res.status(404).json({
+        message: "User not found",
+      });
+
+    const isPasswordValid = compareSync(password, user.password);
+
+    if (!isPasswordValid)
+      return res.status(401).json({
+        message: "Invalid password",
+      });
+
+    const token = sign({ id: user.id }, process.env.JWT_SECRET!, {
+      expiresIn: "7d",
+    });
+
+    return res.status(200).json({
+      message: "User logged in successfully",
+      token,
     });
   }
 }
