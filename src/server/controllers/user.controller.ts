@@ -1,16 +1,20 @@
 import { Router } from "express";
 import { logger } from "../../utils/logger";
+import userService, { IUserService } from "../services/user.service";
 
 class UserController {
   public router = Router();
 
+  private userService: IUserService;
+
   constructor() {
+    this.userService = userService;
     this.initializeRoutes();
     this.listRoutes();
   }
 
   private initializeRoutes(): void {
-    this.router.post("/register");
+    this.router.post("/register", this.userService.register);
     this.router.post("/login");
   }
 
